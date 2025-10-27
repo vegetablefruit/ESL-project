@@ -1,0 +1,41 @@
+{
+    "configurations": [
+        {
+            "name": "nRF52840",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/blinky/pca10059/mbr/config",
+                "/home/user/devel/esl-nsdk/components",
+                "/home/user/devel/esl-nsdk/components/boards",
+                "/home/user/devel/esl-nsdk/components/libraries/atomic",
+                "/home/user/devel/esl-nsdk/components/libraries/balloc",
+                "/home/user/devel/esl-nsdk/components/libraries/bsp",
+                "/home/user/devel/esl-nsdk/components/libraries/delay",
+                "/home/user/devel/esl-nsdk/components/libraries/log",
+                "/home/user/devel/esl-nsdk/components/libraries/memobj",
+                "/home/user/devel/esl-nsdk/components/libraries/ringbuf",
+                "/home/user/devel/esl-nsdk/components/libraries/util",
+                "/home/user/devel/esl-nsdk/components/toolchain/cmsis/include",
+                "/home/user/devel/esl-nsdk/modules/nrfx",
+                "/home/user/devel/esl-nsdk/modules/nrfx/mdk",
+                "/home/user/devel/esl-nsdk/modules/nrfx/hal",
+                "/home/user/devel/esl-nsdk/modules/nrfx/soc",
+                "/home/user/devel/esl-nsdk/integration/nrfx",
+                "/home/user/devel/esl-nsdk/external/fprintf"
+            ],
+            "defines": [
+                "BOARD_PCA10059",
+                "BSP_DEFINES_ONLY",
+                "CONFIG_GPIO_AS_PINRESET",
+                "FLOAT_ABI_HARD",
+                "MBR_PRESENT",
+                "NRF52840_XXAA"
+            ],
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}
