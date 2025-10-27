@@ -1,40 +1,39 @@
 _build/nrf52840_xxaa/main.c.o: ../../../main.c \
  /usr/lib/gcc/arm-none-eabi/9.2.1/include/stdbool.h \
  /usr/lib/gcc/arm-none-eabi/9.2.1/include/stdint.h \
- /home/user/devel/esl-nsdk/components/libraries/delay/nrf_delay.h \
- /home/user/devel/esl-nsdk/modules/nrfx/nrfx.h \
- /home/user/devel/esl-nsdk/integration/nrfx/nrfx_config.h \
- ../config/sdk_config.h \
- /home/user/devel/esl-nsdk/modules/nrfx/drivers/nrfx_common.h \
+ ../../../../../../components/libraries/delay/nrf_delay.h \
+ ../../../../../../modules/nrfx/nrfx.h \
+ ../../../../../../integration/nrfx/nrfx_config.h ../config/sdk_config.h \
+ ../../../../../../modules/nrfx/drivers/nrfx_common.h \
  /usr/lib/gcc/arm-none-eabi/9.2.1/include/stddef.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840.h \
- /home/user/devel/esl-nsdk/components/toolchain/cmsis/include/core_cm4.h \
- /home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_version.h \
- /home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_compiler.h \
- /home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_gcc.h \
- /home/user/devel/esl-nsdk/components/toolchain/cmsis/include/mpu_armv7.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/system_nrf52840.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840_bitfields.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf51_to_nrf52840.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52_to_nrf52840.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/compiler_abstraction.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf_peripherals.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840_peripherals.h \
- /home/user/devel/esl-nsdk/integration/nrfx/nrfx_glue.h \
- /home/user/devel/esl-nsdk/integration/nrfx/legacy/apply_old_config.h \
- /home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_irqs.h \
- /home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_irqs_nrf52840.h \
- /home/user/devel/esl-nsdk/components/libraries/util/nrf_assert.h \
- /home/user/devel/esl-nsdk/components/libraries/util/app_util.h \
- /home/user/devel/esl-nsdk/modules/nrfx/mdk/compiler_abstraction.h \
- /home/user/devel/esl-nsdk/components/libraries/util/nordic_common.h \
- /home/user/devel/esl-nsdk/components/softdevice/mbr/headers/nrf_mbr.h \
- /home/user/devel/esl-nsdk/components/softdevice/mbr/headers/nrf_svc.h \
- /home/user/devel/esl-nsdk/components/libraries/util/nordic_common.h \
- /home/user/devel/esl-nsdk/components/libraries/util/app_util_platform.h \
- /home/user/devel/esl-nsdk/components/libraries/util/nrf_assert.h \
- /home/user/devel/esl-nsdk/components/libraries/util/app_error.h \
+ ../../../../../../modules/nrfx/mdk/nrf.h \
+ ../../../../../../modules/nrfx/mdk/nrf52840.h \
+ ../../../../../../components/toolchain/cmsis/include/core_cm4.h \
+ ../../../../../../components/toolchain/cmsis/include/cmsis_version.h \
+ ../../../../../../components/toolchain/cmsis/include/cmsis_compiler.h \
+ ../../../../../../components/toolchain/cmsis/include/cmsis_gcc.h \
+ ../../../../../../components/toolchain/cmsis/include/mpu_armv7.h \
+ ../../../../../../modules/nrfx/mdk/system_nrf52840.h \
+ ../../../../../../modules/nrfx/mdk/nrf52840_bitfields.h \
+ ../../../../../../modules/nrfx/mdk/nrf51_to_nrf52840.h \
+ ../../../../../../modules/nrfx/mdk/nrf52_to_nrf52840.h \
+ ../../../../../../modules/nrfx/mdk/compiler_abstraction.h \
+ ../../../../../../modules/nrfx/mdk/nrf_peripherals.h \
+ ../../../../../../modules/nrfx/mdk/nrf52840_peripherals.h \
+ ../../../../../../integration/nrfx/nrfx_glue.h \
+ ../../../../../../integration/nrfx/legacy/apply_old_config.h \
+ ../../../../../../modules/nrfx/soc/nrfx_irqs.h \
+ ../../../../../../modules/nrfx/soc/nrfx_irqs_nrf52840.h \
+ ../../../../../../components/libraries/util/nrf_assert.h \
+ ../../../../../../components/libraries/util/app_util.h \
+ ../../../../../../modules/nrfx/mdk/compiler_abstraction.h \
+ ../../../../../../components/libraries/util/nordic_common.h \
+ ../../../../../../components/softdevice/mbr/headers/nrf_mbr.h \
+ ../../../../../../components/softdevice/mbr/headers/nrf_svc.h \
+ ../../../../../../components/libraries/util/nordic_common.h \
+ ../../../../../../components/libraries/util/app_util_platform.h \
+ ../../../../../../components/libraries/util/nrf_assert.h \
+ ../../../../../../components/libraries/util/app_error.h \
  /usr/include/newlib/stdio.h /usr/include/newlib/_ansi.h \
  /usr/include/newlib/newlib.h /usr/include/newlib/_newlib_version.h \
  /usr/include/newlib/sys/config.h /usr/include/newlib/machine/ieeefp.h \
@@ -47,89 +46,89 @@ _build/nrf52840_xxaa/main.c.o: ../../../main.c \
  /usr/include/newlib/sys/_stdint.h \
  /usr/include/newlib/sys/_pthreadtypes.h \
  /usr/include/newlib/machine/types.h /usr/include/newlib/sys/stdio.h \
- /home/user/devel/esl-nsdk/components/libraries/util/sdk_errors.h \
- /home/user/devel/esl-nsdk/components/drivers_nrf/nrf_soc_nosd/nrf_error.h \
- /home/user/devel/esl-nsdk/components/libraries/util/app_error_weak.h \
- /home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_coredep.h \
- /home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_atomic.h \
- /home/user/devel/esl-nsdk/components/libraries/util/sdk_errors.h \
- /home/user/devel/esl-nsdk/components/libraries/util/sdk_resources.h \
- /home/user/devel/esl-nsdk/modules/nrfx/drivers/nrfx_errors.h \
- /home/user/devel/esl-nsdk/components/boards/boards.h \
- /home/user/devel/esl-nsdk/modules/nrfx/hal/nrf_gpio.h \
- /home/user/devel/esl-nsdk/components/boards/pca10059.h
+ ../../../../../../components/libraries/util/sdk_errors.h \
+ ../../../../../../components/drivers_nrf/nrf_soc_nosd/nrf_error.h \
+ ../../../../../../components/libraries/util/app_error_weak.h \
+ ../../../../../../modules/nrfx/soc/nrfx_coredep.h \
+ ../../../../../../modules/nrfx/soc/nrfx_atomic.h \
+ ../../../../../../components/libraries/util/sdk_errors.h \
+ ../../../../../../components/libraries/util/sdk_resources.h \
+ ../../../../../../modules/nrfx/drivers/nrfx_errors.h \
+ ../../../../../../components/boards/boards.h \
+ ../../../../../../modules/nrfx/hal/nrf_gpio.h \
+ ../../../../../../components/boards/pca10059.h
 
 /usr/lib/gcc/arm-none-eabi/9.2.1/include/stdbool.h:
 
 /usr/lib/gcc/arm-none-eabi/9.2.1/include/stdint.h:
 
-/home/user/devel/esl-nsdk/components/libraries/delay/nrf_delay.h:
+../../../../../../components/libraries/delay/nrf_delay.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/nrfx.h:
+../../../../../../modules/nrfx/nrfx.h:
 
-/home/user/devel/esl-nsdk/integration/nrfx/nrfx_config.h:
+../../../../../../integration/nrfx/nrfx_config.h:
 
 ../config/sdk_config.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/drivers/nrfx_common.h:
+../../../../../../modules/nrfx/drivers/nrfx_common.h:
 
 /usr/lib/gcc/arm-none-eabi/9.2.1/include/stddef.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf.h:
+../../../../../../modules/nrfx/mdk/nrf.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840.h:
+../../../../../../modules/nrfx/mdk/nrf52840.h:
 
-/home/user/devel/esl-nsdk/components/toolchain/cmsis/include/core_cm4.h:
+../../../../../../components/toolchain/cmsis/include/core_cm4.h:
 
-/home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_version.h:
+../../../../../../components/toolchain/cmsis/include/cmsis_version.h:
 
-/home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_compiler.h:
+../../../../../../components/toolchain/cmsis/include/cmsis_compiler.h:
 
-/home/user/devel/esl-nsdk/components/toolchain/cmsis/include/cmsis_gcc.h:
+../../../../../../components/toolchain/cmsis/include/cmsis_gcc.h:
 
-/home/user/devel/esl-nsdk/components/toolchain/cmsis/include/mpu_armv7.h:
+../../../../../../components/toolchain/cmsis/include/mpu_armv7.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/system_nrf52840.h:
+../../../../../../modules/nrfx/mdk/system_nrf52840.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840_bitfields.h:
+../../../../../../modules/nrfx/mdk/nrf52840_bitfields.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf51_to_nrf52840.h:
+../../../../../../modules/nrfx/mdk/nrf51_to_nrf52840.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52_to_nrf52840.h:
+../../../../../../modules/nrfx/mdk/nrf52_to_nrf52840.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/compiler_abstraction.h:
+../../../../../../modules/nrfx/mdk/compiler_abstraction.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf_peripherals.h:
+../../../../../../modules/nrfx/mdk/nrf_peripherals.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/nrf52840_peripherals.h:
+../../../../../../modules/nrfx/mdk/nrf52840_peripherals.h:
 
-/home/user/devel/esl-nsdk/integration/nrfx/nrfx_glue.h:
+../../../../../../integration/nrfx/nrfx_glue.h:
 
-/home/user/devel/esl-nsdk/integration/nrfx/legacy/apply_old_config.h:
+../../../../../../integration/nrfx/legacy/apply_old_config.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_irqs.h:
+../../../../../../modules/nrfx/soc/nrfx_irqs.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_irqs_nrf52840.h:
+../../../../../../modules/nrfx/soc/nrfx_irqs_nrf52840.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/nrf_assert.h:
+../../../../../../components/libraries/util/nrf_assert.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/app_util.h:
+../../../../../../components/libraries/util/app_util.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/mdk/compiler_abstraction.h:
+../../../../../../modules/nrfx/mdk/compiler_abstraction.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/nordic_common.h:
+../../../../../../components/libraries/util/nordic_common.h:
 
-/home/user/devel/esl-nsdk/components/softdevice/mbr/headers/nrf_mbr.h:
+../../../../../../components/softdevice/mbr/headers/nrf_mbr.h:
 
-/home/user/devel/esl-nsdk/components/softdevice/mbr/headers/nrf_svc.h:
+../../../../../../components/softdevice/mbr/headers/nrf_svc.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/nordic_common.h:
+../../../../../../components/libraries/util/nordic_common.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/app_util_platform.h:
+../../../../../../components/libraries/util/app_util_platform.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/nrf_assert.h:
+../../../../../../components/libraries/util/nrf_assert.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/app_error.h:
+../../../../../../components/libraries/util/app_error.h:
 
 /usr/include/newlib/stdio.h:
 
@@ -171,24 +170,24 @@ _build/nrf52840_xxaa/main.c.o: ../../../main.c \
 
 /usr/include/newlib/sys/stdio.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/sdk_errors.h:
+../../../../../../components/libraries/util/sdk_errors.h:
 
-/home/user/devel/esl-nsdk/components/drivers_nrf/nrf_soc_nosd/nrf_error.h:
+../../../../../../components/drivers_nrf/nrf_soc_nosd/nrf_error.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/app_error_weak.h:
+../../../../../../components/libraries/util/app_error_weak.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_coredep.h:
+../../../../../../modules/nrfx/soc/nrfx_coredep.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/soc/nrfx_atomic.h:
+../../../../../../modules/nrfx/soc/nrfx_atomic.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/sdk_errors.h:
+../../../../../../components/libraries/util/sdk_errors.h:
 
-/home/user/devel/esl-nsdk/components/libraries/util/sdk_resources.h:
+../../../../../../components/libraries/util/sdk_resources.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/drivers/nrfx_errors.h:
+../../../../../../modules/nrfx/drivers/nrfx_errors.h:
 
-/home/user/devel/esl-nsdk/components/boards/boards.h:
+../../../../../../components/boards/boards.h:
 
-/home/user/devel/esl-nsdk/modules/nrfx/hal/nrf_gpio.h:
+../../../../../../modules/nrfx/hal/nrf_gpio.h:
 
-/home/user/devel/esl-nsdk/components/boards/pca10059.h:
+../../../../../../components/boards/pca10059.h:
