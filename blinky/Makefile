@@ -5,8 +5,8 @@ DFU_PACKAGE      := $(OUTPUT_DIRECTORY)/nrf52840_xxaa.dfu
 DFU_PORT         ?= /dev/ttyACM0
 
 
-SDK_ROOT := ../../../../../..
-PROJ_DIR := ../../..
+SDK_ROOT ?= /home/user/devel/esl-nsdk
+PROJ_DIR := ./
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
   LINKER_SCRIPT  := blinky_gcc_nrf52.ld
@@ -32,6 +32,7 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
+  
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -42,7 +43,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/strerror \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/libraries/util \
-  ../config \
+  ./config \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/ringbuf \
   $(SDK_ROOT)/modules/nrfx/hal \
@@ -58,6 +59,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/external/fprintf \
   $(SDK_ROOT)/components/libraries/log/src \
+  $(SDK_ROOT)/components \
+  $(SDK_ROOT)/components/boards \
+  $(SDK_ROOT)/components/libraries \
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -82,6 +86,12 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
+CFLAGS += \
+  -I$(SDK_ROOT)/components \
+  -I$(SDK_ROOT)/components/boards \
+  -I$(SDK_ROOT)/components/libraries/delay \
+  -I$(SDK_ROOT)/components/libraries/util \
+  -I$(SDK_ROOT)/modules/nrfx/mdk
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)

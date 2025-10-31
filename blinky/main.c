@@ -62,13 +62,40 @@ int main(void)
     bsp_board_init(BSP_INIT_LEDS);
 
     /* Toggle LEDs. */
+    // #7199
     while (true)
     {
-        for (int i = 0; i < LEDS_NUMBER; i++)
+        // LED1 - 7 times
+        for (int i = 0; i < 7; i++)
         {
             bsp_board_led_invert(i);
             nrf_delay_ms(500);
         }
+        nrf_delay_ms(600);
+
+        // LED2 - 1 time
+        for (int i = 0; i < 1; i++)
+        {
+            bsp_board_led_invert(i);
+            nrf_delay_ms(500);
+        }
+        nrf_delay_ms(600);
+
+        // LED3 - 9 times
+        for (int i = 0; i < 9; i++)
+        {
+            bsp_board_led_invert(i);
+            nrf_delay_ms(500);
+        }
+        nrf_delay_ms(600);
+
+        // LED4 - 9 times
+        for (int i = 0; i < 9; i++)
+        {
+            bsp_board_led_invert(i);
+            nrf_delay_ms(500);
+        }
+        nrf_delay_ms(600);
     }
 }
 
