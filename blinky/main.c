@@ -1,104 +1,67 @@
-/**
- * Copyright (c) 2014 - 2021, Nordic Semiconductor ASA
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form, except as embedded into a Nordic
- *    Semiconductor ASA integrated circuit in a product or a software update for
- *    such product, must reproduce the above copyright notice, this list of
- *    conditions and the following disclaimer in the documentation and/or other
- *    materials provided with the distribution.
- *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * 4. This software, with or without modification, must only be used with a
- *    Nordic Semiconductor ASA integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-/** @file
- *
- * @defgroup blinky_example_main main.c
- * @{
- * @ingroup blinky_example
- * @brief Blinky Example Application main file.
- *
- * This file contains the source code for a sample application to blink LEDs.
- *
- */
+#include <nrf_gpio.h>
+#include <nrf_delay.h>
 
-#include <stdbool.h>
-#include <stdint.h>
-#include "nrf_delay.h"
-#include "boards.h"
+// 7199
+#define BUTTON NRF_GPIO_PIN_MAP(1, 6)
+#define LED_1 NRF_GPIO_PIN_MAP(0, 6)
+#define LED_R NRF_GPIO_PIN_MAP(0, 8)
+#define LED_G NRF_GPIO_PIN_MAP(0, 9)
+#define LED_B NRF_GPIO_PIN_MAP(0, 12)
 
-/**
- * @brief Function for application main entry.
- */
-int main(void)
+// sequence
+uint32_t led_seq[] = {
+    LED_1, LED_1, LED_1, LED_1, LED_1, LED_1, LED_1,               // 7times
+    LED_R,                                                         // 1 times
+    LED_G, LED_G, LED_G, LED_G, LED_G, LED_G, LED_G, LED_G, LED_G, // 9 times
+    LED_B, LED_B, LED_B, LED_B, LED_B, LED_B, LED_B, LED_B, LED_B  // 9 times
+};
+#define SEQ_LENGTH (sizeof(led_seq) / sizeof(led_seq[0]))
+
+static uint32_t index = 0;
+
+void led_is_on(uint32_t pin)
 {
-    /* Configure board. */
-    bsp_board_init(BSP_INIT_LEDS);
-
-    /* Toggle LEDs. */
-    // #7199
-    while (true)
-    {
-        // LED1 - 7 times
-        for (int i = 0; i < 7; i++)
-        {
-            bsp_board_led_invert(i);
-            nrf_delay_ms(500);
-        }
-        nrf_delay_ms(600);
-
-        // LED2 - 1 time
-        for (int i = 0; i < 1; i++)
-        {
-            bsp_board_led_invert(i);
-            nrf_delay_ms(500);
-        }
-        nrf_delay_ms(600);
-
-        // LED3 - 9 times
-        for (int i = 0; i < 9; i++)
-        {
-            bsp_board_led_invert(i);
-            nrf_delay_ms(500);
-        }
-        nrf_delay_ms(600);
-
-        // LED4 - 9 times
-        for (int i = 0; i < 9; i++)
-        {
-            bsp_board_led_invert(i);
-            nrf_delay_ms(500);
-        }
-        nrf_delay_ms(600);
-    }
+    nrf_gpio_pin_write(pin, 1);
 }
 
-/**
- *@}
- **/
+void led_is_off(uint32_t pin)
+{
+    nrf_gpio_pin_write(pin, 0);
+}
+
+void all_leds_are_off()
+{
+    led_is_off(LED_1);
+    led_is_off(LED_R);
+    led_is_off(LED_G);
+    led_is_off(LED_B);
+}
+
+int main(void)
+{
+    nrf_gpio_cfg_output(LED_1);
+    nrf_gpio_cfg_output(LED_R);
+    nrf_gpio_cfg_output(LED_G);
+    nrf_gpio_cfg_output(LED_B);
+    nrf_gpio_cfg_input(BUTTON, NRF_GPIO_PIN_PULLUP);
+
+    all_leds_are_off();
+
+    while (1)
+    {
+        // button is pressed
+        if ((nrf_gpio_pin_read(BUTTON) == 0))
+        {
+            led_is_on(led_seq[index]);
+            nrf_delay_ms(500);
+            led_is_off(led_seq[index]);
+
+            index = (index + 1) % SEQ_LENGTH;
+        }
+        // button is not pressed
+        else
+        {
+            nrf_delay_ms(50);
+        }
+    }
+}
