@@ -1,5 +1,10 @@
+#include <nrfx_pwm.h>
+#include <nrfx_gpiote.h>
 #include <nrf_gpio.h>
 #include <nrf_delay.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <nrfx_systick.h>
 
 // 7199
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
@@ -17,51 +22,107 @@ uint32_t led_seq[] = {
 };
 #define SEQ_LENGTH (sizeof(led_seq) / sizeof(led_seq[0]))
 
-static uint32_t index = 0;
+static uint32_t led_index = 0;
+static nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
 
-void led_is_on(uint32_t pin)
-{
-    nrf_gpio_pin_write(pin, 1);
+static uint16_t pwm_value = 0;  
+static nrf_pwm_sequence_t pwm_seq = {
+    .values.p_common = &pwm_value,
+    .length = 1,
+    .repetition = 0,
+    .end_delay = 0
 }
 
-void led_is_off(uint32_t pin)
-{
-    nrf_gpio_pin_write(pin, 0);
+void init_pwm(uint32_t pin){
+    nrfx_pwm_config_t config = {
+        .output_pins = {
+            pin,
+            NRFX_PWM_PIN_NOT_USED,
+            NRFX_PWM_PIN_NOT_USED,
+            NRFX_PWM_PIN_NOT_USED
+        },
+        .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
+        .base_clock = NRF_PWM_CLK_1MHz,
+        .count_mode = NRF_PWM_MODE_UP,
+        .top_value = 1000,
+        .load_mode = NRF_PWM_LOAD_COMMON,
+        .step_mode = NRF_PWM_STEP_AUTO
+    }
+    nrfx_pwm_init(&pwm0, &config, NULL);
+    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 }
 
-void all_leds_are_off()
-{
-    led_is_off(LED_1);
-    led_is_off(LED_R);
-    led_is_off(LED_G);
-    led_is_off(LED_B);
+//duty cycle
+void pwm_set_duty_cycle(uint16_t duty){
+    if (duty > 1000){
+        duty = 1000;
+        pwm_value = duty;
+    }
 }
 
-int main(void)
-{
-    nrf_gpio_cfg_output(LED_1);
-    nrf_gpio_cfg_output(LED_R);
-    nrf_gpio_cfg_output(LED_G);
-    nrf_gpio_cfg_output(LED_B);
-    nrf_gpio_cfg_input(BUTTON, NRF_GPIO_PIN_PULLUP);
+void pwm_switch_led(uint32_t pin){
+    nrfx_pwm_uninit(&pwm0);
+    pwm_init(pin);
+}
 
-    all_leds_are_off();
+//GPIOTE
+volatile uint32_t last_click_time = 0;
+volatile bool blinking = false;
+
+void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
+    uint32_t now = nrfx_systick_get();
+
+    if(now - last_click_time < 350){
+        blinking = !blinking;
+    }
+    last_click_time = now;
+
+}
+
+void gpiote_init(){
+    nrfx_gpiote_init();
+
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    config.pull = NRF_GPIO_PIN_PULLUP;
+
+    nrfx_gpiote_in_init(BUTTON, &config, button_handler);
+    nrfx_gpiote_in_event_enable(BUTTON, true);
+}
+
+int main(void){
+    nrfx_systick_init();
+    gpiote_init();
+
+    pwm_init(led_seq[0]);  // первый LED
+
+    uint16_t duty = 0;
+    int direction = 1;
 
     while (1)
     {
-        // button is pressed
-        if ((nrf_gpio_pin_read(BUTTON) == 0))
+        if (blinking)
         {
-            led_is_on(led_seq[index]);
-            nrf_delay_ms(500);
-            led_is_off(led_seq[index]);
+            pwm_set_duty(duty);
 
-            index = (index + 1) % SEQ_LENGTH;
+            duty += direction * 10;
+
+            if (duty >= 1000)
+            {
+                direction = -1;
+                led_index = (led_index + 1) % SEQ_LENGTH;
+                pwm_switch_led(led_seq[led_index]);
+            }
+
+            if (duty == 0)
+            {
+                direction = 1;
+            }
+
+            nrf_delay_ms(10);
         }
-        // button is not pressed
         else
         {
-            nrf_delay_ms(50);
+            nrf_delay_ms(20);
         }
     }
 }
