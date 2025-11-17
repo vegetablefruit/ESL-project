@@ -32,6 +32,10 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
+  $(SDK_ROOT)/components/libraries/timer/app_timer.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c
   
 
 # Include folders common to all targets
@@ -62,6 +66,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/libraries \
+  $(SDK_ROOT)/components/libraries/timer \
+  $(SDK_ROOT)/modules/nrfx/drivers/include \
 
 # Libraries common to all targets
 LIB_FILES += \
