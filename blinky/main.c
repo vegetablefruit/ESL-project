@@ -33,7 +33,11 @@ static nrf_pwm_sequence_t pwm_seq = {
 void pwm_init(uint32_t pin)
 {
     nrfx_pwm_config_t config = {
-        .output_pins = {pin, NRFX_PWM_PIN_NOT_USED, NRFX_PWM_PIN_NOT_USED, NRFX_PWM_PIN_NOT_USED},
+        .output_pins = {pin, 
+                       NRFX_PWM_PIN_NOT_USED, 
+                       NRFX_PWM_PIN_NOT_USED, 
+                       NRFX_PWM_PIN_NOT_USED
+                       },
         .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
         .base_clock = NRF_PWM_CLK_1MHz,
         .count_mode = NRF_PWM_MODE_UP,
@@ -47,11 +51,8 @@ void pwm_init(uint32_t pin)
 
 void pwm_deinit_safe(void)
 {
-
 #if defined(NRFX_PWM_HAS_STOP) || defined(NRFX_PWM_STOP)
     nrfx_pwm_stop(&pwm0, false);
-#else
-
 #endif
     nrfx_pwm_uninit(&pwm0);
 }
@@ -65,37 +66,48 @@ void pwm_set_duty(uint16_t duty)
 
 void pwm_switch_led(uint32_t pin)
 {
-
     pwm_deinit_safe();
     pwm_init(pin);
 }
 
 volatile bool blinking = false;
 
-static nrfx_systick_state_t last_state;
-static bool last_state_valid = false;
+// double click
+static nrfx_systick_state_t last_click_state;
+static bool last_click_valid = false;
 
-#define DOUBLE_CLICK_MS 350
-#define DOUBLE_CLICK_US (DOUBLE_CLICK_MS * 1000U)
+
+// debounce
+static nrfx_systick_state_t last_debounce;
+#define DEBOUNCE 70
+#define DEBOUNCE_MKS (DEBOUNCE * 1000)
+
+#define DOUBLE_CLICK 400
+#define DOUBLE_CLICK_MKS (DOUBLE_CLICK * 1000U)
 
 void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     nrfx_systick_state_t now;
     nrfx_systick_get(&now);
 
-    if (last_state_valid)
+    
+    bool bounce_elapsed = nrfx_systick_test(&last_debounce, DEBOUNCE_MKS);
+    if (!bounce_elapsed)
+        return;
+    last_debounce = now;
+
+    if (last_click_valid)
     {
+        bool double_ok = nrfx_systick_test(&last_click_state, DOUBLE_CLICK_MKS);
 
-        bool elapsed_ge = nrfx_systick_test(&last_state, DOUBLE_CLICK_US);
-
-        if (!elapsed_ge)
+        if (!double_ok)
         {
             blinking = !blinking;
         }
     }
 
-    last_state = now;
-    last_state_valid = true;
+    last_click_state = now;
+    last_click_valid = true;
 }
 
 void gpiote_init()
@@ -139,18 +151,22 @@ int main(void)
         {
             pwm_set_duty(duty);
             duty = duty + direction * 10;
+
             if (duty >= 1000)
             {
                 duty = 1000;
                 direction = -1;
-                led_index = (led_index + 1) % SEQ_LENGTH;
-                pwm_switch_led(led_seq[led_index]);
             }
+
             if (duty == 0)
             {
                 direction = 1;
+
+                led_index = (led_index + 1) % SEQ_LENGTH;
+                pwm_switch_led(led_seq[led_index]);
             }
-            nrf_delay_ms(10);
+
+            nrf_delay_ms(20);
         }
         else
         {
