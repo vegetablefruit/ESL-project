@@ -12,10 +12,10 @@
 #define LED_R NRF_GPIO_PIN_MAP(0, 8)
 #define LED_G NRF_GPIO_PIN_MAP(0, 9)
 #define LED_B NRF_GPIO_PIN_MAP(0, 12)
-// #define LED_INVALID (uint32_t)(-1)
 #define LED_ACTIVE_LOW 1
 
-#define DEBOUNCE_US (70 * 1000U)
+#define DEBOUNCE_US (15000U)
+
 #define DOUBLE_CLICK_US (400 * 1000u)
 #define HOLD_BUTTON_MS 60
 
@@ -60,6 +60,7 @@ static inline void led_off_gpio(uint32_t pin)
     nrf_gpio_pin_clear(pin);
 #endif
 }
+
 static inline void led_on_gpio(uint32_t pin)
 {
 #if LED_ACTIVE_LOW
@@ -85,12 +86,8 @@ void pwm_init(void)
         .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
         .step_mode = NRF_PWM_STEP_AUTO};
 
-    // Functions that reset GPIO
-    led_off_gpio(LED_R);
-    led_off_gpio(LED_G);
-    led_off_gpio(LED_B);
-
     nrfx_pwm_init(&pwm0, &config, NULL);
+
     nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 }
 
@@ -166,8 +163,6 @@ static void apply_rgb_to_pwm(float r, float g, float b)
     pwm_vals.channel_1 = gv;
     pwm_vals.channel_2 = bv;
 #endif
-
-    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 }
 
 static inline void sleep_cpu(void)
@@ -193,9 +188,7 @@ void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
         return;
     last_debounce_time = now;
 
-    int val = nrf_gpio_pin_read(BUTTON);
-
-    if (val == 0)
+    if (nrf_gpio_pin_read(BUTTON) == 0)
     {
         button_pressed = true;
         hold_time = now;
@@ -223,7 +216,7 @@ void gpiote_init()
 {
     nrfx_gpiote_init();
 
-    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
     config.pull = NRF_GPIO_PIN_PULLUP;
 
     nrfx_gpiote_in_init(BUTTON, &config, button_handler);
@@ -290,7 +283,7 @@ int main(void)
 
     while (1)
     {
-        if (button_pressed)
+        if (nrf_gpio_pin_read(BUTTON) == 0)
         {
             if (nrfx_systick_test(&hold_time, HOLD_BUTTON_MS * 1000U))
             {
@@ -313,6 +306,7 @@ int main(void)
                 update_color_from_hsv();
             }
         }
+
         indicator_update_nonblocking();
         sleep_cpu();
     }
