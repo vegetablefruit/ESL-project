@@ -177,7 +177,7 @@ static void debounce_timer_handler(void *p_context)
                 nrfx_systick_state_t now;
                 nrfx_systick_get(&now);
 
-                if (!nrfx_systick_test(&last_click_time, DOUBLE_CLICK_US) == false)
+                if (!nrfx_systick_test(&last_click_time, DOUBLE_CLICK_US))
                 {
                     mode = (input_mode_t)((mode + 1) % 4);
                     waiting_second_click = false;
@@ -259,8 +259,8 @@ static inline void sleep_cpu(void)
 int main(void)
 {
     nrfx_systick_init();
-    app_timer_init();                                                                          // ★
-    app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler); // ★
+    app_timer_init();
+    app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
 
     gpiote_init();
     pwm_init();
@@ -278,12 +278,25 @@ int main(void)
             {
                 nrfx_systick_get(&hold_time);
 
-                if (mode == MODE_HUE)
+                switch (mode)
+                {
+                case MODE_HUE:
                     hue = (hue + 1) % 360;
-                else if (mode == MODE_SAT && saturation < 100)
-                    saturation++;
-                else if (mode == MODE_VAL && value < 100)
-                    value++;
+                    break;
+
+                case MODE_SAT:
+                    if (saturation < 100)
+                        saturation++;
+                    break;
+
+                case MODE_VAL:
+                    if (value < 100)
+                        value++;
+                    break;
+
+                default:
+                    break;
+                }
 
                 update_color_from_hsv();
             }
