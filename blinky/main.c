@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <nrfx_systick.h>
+#include <app_timer.h>
+#include <app_error.h>
 #include <math.h>
 
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
@@ -14,8 +16,7 @@
 #define LED_B NRF_GPIO_PIN_MAP(0, 12)
 #define LED_ACTIVE_LOW 1
 
-#define DEBOUNCE_US (15000U)
-
+#define DEBOUNCE_MS 15
 #define DOUBLE_CLICK_US (400 * 1000u)
 #define HOLD_BUTTON_MS 60
 
@@ -32,17 +33,20 @@ typedef enum
 } input_mode_t;
 
 static volatile input_mode_t mode = MODE_NONE;
-static volatile bool button_pressed = false;
+static volatile bool button_stable_pressed = false;
+static volatile bool raw_state = false;
+
+APP_TIMER_DEF(btn_debounce_timer);
 
 static nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
 static nrf_pwm_values_individual_t pwm_vals = {0, 0, 0, 0};
-static nrf_pwm_sequence_t pwm_seq = {
-    .values.p_individual = &pwm_vals,
-    .length = 1,
-    .repeats = 0,
-    .end_delay = 0};
+static nrf_pwm_sequence_t pwm_seq =
+    {
+        .values.p_individual = &pwm_vals,
+        .length = 1,
+        .repeats = 0,
+        .end_delay = 0};
 
-static nrfx_systick_state_t last_debounce_time;
 static nrfx_systick_state_t last_click_time;
 static nrfx_systick_state_t hold_time;
 static bool waiting_second_click = false;
@@ -53,10 +57,8 @@ static bool indicator = false;
 static inline void led_off_gpio(uint32_t pin)
 {
 #if LED_ACTIVE_LOW
-    nrf_gpio_cfg_output(pin);
     nrf_gpio_pin_set(pin);
 #else
-    nrf_gpio_cfg_output(pin);
     nrf_gpio_pin_clear(pin);
 #endif
 }
@@ -64,30 +66,25 @@ static inline void led_off_gpio(uint32_t pin)
 static inline void led_on_gpio(uint32_t pin)
 {
 #if LED_ACTIVE_LOW
-    nrf_gpio_cfg_output(pin);
     nrf_gpio_pin_clear(pin);
 #else
-    nrf_gpio_cfg_output(pin);
     nrf_gpio_pin_set(pin);
 #endif
 }
 
 void pwm_init(void)
 {
-    nrfx_pwm_config_t config = {
-        .output_pins = {LED_R,
-                        LED_G,
-                        LED_B,
-                        NRFX_PWM_PIN_NOT_USED},
-        .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
-        .base_clock = NRF_PWM_CLK_1MHz,
-        .count_mode = NRF_PWM_MODE_UP,
-        .top_value = 1000,
-        .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
-        .step_mode = NRF_PWM_STEP_AUTO};
+    nrfx_pwm_config_t config =
+        {
+            .output_pins = {LED_R, LED_G, LED_B, NRFX_PWM_PIN_NOT_USED},
+            .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
+            .base_clock = NRF_PWM_CLK_1MHz,
+            .count_mode = NRF_PWM_MODE_UP,
+            .top_value = 1000,
+            .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+            .step_mode = NRF_PWM_STEP_AUTO};
 
     nrfx_pwm_init(&pwm0, &config, NULL);
-
     nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 }
 
@@ -103,73 +100,57 @@ static void hsv_to_rgb(uint32_t H_deg, uint32_t S_per, uint32_t V_per,
     float X = C * (1.0f - fabsf(fmodf(Hp, 2.0f) - 1.0f));
     float m = V - C;
 
-    float r1 = 0, g1 = 0, b1 = 0;
+    float r = 0, g = 0, b = 0;
 
     if (Hp < 1)
     {
-        r1 = C;
-        g1 = X;
-        b1 = 0;
+        r = C;
+        g = X;
     }
     else if (Hp < 2)
     {
-        r1 = X;
-        g1 = C;
-        b1 = 0;
+        r = X;
+        g = C;
     }
     else if (Hp < 3)
     {
-        r1 = 0;
-        g1 = C;
-        b1 = X;
+        g = C;
+        b = X;
     }
     else if (Hp < 4)
     {
-        r1 = 0;
-        g1 = X;
-        b1 = C;
+        g = X;
+        b = C;
     }
     else if (Hp < 5)
     {
-        r1 = X;
-        g1 = 0;
-        b1 = C;
+        r = X;
+        b = C;
     }
     else
     {
-        r1 = C;
-        g1 = 0;
-        b1 = X;
+        r = C;
+        b = X;
     }
 
-    *out_r = r1 + m;
-    *out_g = g1 + m;
-    *out_b = b1 + m;
+    *out_r = r + m;
+    *out_g = g + m;
+    *out_b = b + m;
 }
 
 static void apply_rgb_to_pwm(float r, float g, float b)
 {
     uint16_t top = 1000;
-    uint16_t rv = (uint16_t)(r * top + 0.5f);
-    uint16_t gv = (uint16_t)(g * top + 0.5f);
-    uint16_t bv = (uint16_t)(b * top + 0.5f);
 
 #if LED_ACTIVE_LOW
-    pwm_vals.channel_0 = top - rv;
-    pwm_vals.channel_1 = top - gv;
-    pwm_vals.channel_2 = top - bv;
+    pwm_vals.channel_0 = top - (uint16_t)(r * top);
+    pwm_vals.channel_1 = top - (uint16_t)(g * top);
+    pwm_vals.channel_2 = top - (uint16_t)(b * top);
 #else
-    pwm_vals.channel_0 = rv;
-    pwm_vals.channel_1 = gv;
-    pwm_vals.channel_2 = bv;
+    pwm_vals.channel_0 = (uint16_t)(r * top);
+    pwm_vals.channel_1 = (uint16_t)(g * top);
+    pwm_vals.channel_2 = (uint16_t)(b * top);
 #endif
-}
-
-static inline void sleep_cpu(void)
-{
-    __WFE();
-    __SEV();
-    __WFI();
 }
 
 static void update_color_from_hsv(void)
@@ -179,37 +160,41 @@ static void update_color_from_hsv(void)
     apply_rgb_to_pwm(r, g, b);
 }
 
+static void debounce_timer_handler(void *p_context)
+{
+    bool stable = (nrf_gpio_pin_read(BUTTON) == 0);
+
+    if (stable != button_stable_pressed)
+    {
+        button_stable_pressed = stable;
+
+        if (stable)
+        {
+            nrfx_systick_get(&hold_time);
+
+            if (waiting_second_click)
+            {
+                nrfx_systick_state_t now;
+                nrfx_systick_get(&now);
+
+                if (!nrfx_systick_test(&last_click_time, DOUBLE_CLICK_US) == false)
+                {
+                    mode = (input_mode_t)((mode + 1) % 4);
+                    waiting_second_click = false;
+                }
+            }
+            else
+            {
+                waiting_second_click = true;
+                nrfx_systick_get(&last_click_time);
+            }
+        }
+    }
+}
+
 void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    nrfx_systick_state_t now;
-    nrfx_systick_get(&now);
-
-    if (!nrfx_systick_test(&last_debounce_time, DEBOUNCE_US))
-        return;
-    last_debounce_time = now;
-
-    if (nrf_gpio_pin_read(BUTTON) == 0)
-    {
-        button_pressed = true;
-        hold_time = now;
-
-        if (waiting_second_click)
-        {
-            if (!nrfx_systick_test(&last_click_time, DOUBLE_CLICK_US))
-                mode = (input_mode_t)((mode + 1) % 4);
-
-            waiting_second_click = false;
-        }
-        else
-        {
-            waiting_second_click = true;
-            last_click_time = now;
-        }
-    }
-    else
-    {
-        button_pressed = false;
-    }
+    app_timer_start(btn_debounce_timer, APP_TIMER_TICKS(DEBOUNCE_MS), NULL);
 }
 
 void gpiote_init()
@@ -223,7 +208,7 @@ void gpiote_init()
     nrfx_gpiote_in_event_enable(BUTTON, true);
 }
 
-static void indicator_update_nonblocking(void)
+static void indicator_update(void)
 {
     nrfx_systick_state_t now;
     nrfx_systick_get(&now);
@@ -232,7 +217,6 @@ static void indicator_update_nonblocking(void)
     {
     case MODE_NONE:
         led_off_gpio(LED_1);
-        indicator = false;
         break;
 
     case MODE_HUE:
@@ -261,54 +245,51 @@ static void indicator_update_nonblocking(void)
 
     case MODE_VAL:
         led_on_gpio(LED_1);
-        indicator = true;
         break;
     }
+}
+
+static inline void sleep_cpu(void)
+{
+    __WFE();
+    __SEV();
+    __WFI();
 }
 
 int main(void)
 {
     nrfx_systick_init();
+    app_timer_init();                                                                          // ★
+    app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler); // ★
+
     gpiote_init();
-
-    led_off_gpio(LED_1);
-
     pwm_init();
+
     update_color_from_hsv();
 
     nrfx_systick_get(&indicator_last_toggle);
-    nrfx_systick_get(&last_debounce_time);
-    nrfx_systick_get(&last_click_time);
     nrfx_systick_get(&hold_time);
 
     while (1)
     {
-        if (nrf_gpio_pin_read(BUTTON) == 0)
+        if (button_stable_pressed)
         {
             if (nrfx_systick_test(&hold_time, HOLD_BUTTON_MS * 1000U))
             {
                 nrfx_systick_get(&hold_time);
 
                 if (mode == MODE_HUE)
-                {
                     hue = (hue + 1) % 360;
-                }
-                else if (mode == MODE_SAT)
-                {
-                    if (saturation < 100)
-                        saturation++;
-                }
-                else if (mode == MODE_VAL)
-                {
-                    if (value < 100)
-                        value++;
-                }
+                else if (mode == MODE_SAT && saturation < 100)
+                    saturation++;
+                else if (mode == MODE_VAL && value < 100)
+                    value++;
+
                 update_color_from_hsv();
             }
         }
 
-        indicator_update_nonblocking();
+        indicator_update();
         sleep_cpu();
     }
-    return 0;
 }

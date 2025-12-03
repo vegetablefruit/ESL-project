@@ -3088,6 +3088,36 @@
 // </h>
 //==========================================================
 
+#define APP_TIMER_CONFIG_RTC_FREQUENCY 0
+
+#define APP_TIMER_ENABLED 1
+#define APP_TIMER_CONFIG_USE_SCHEDULER 0
+#define APP_TIMER_KEEPS_RTC_ACTIVE 1
+#define APP_TIMER_CONFIG_SWI_NUMBER 0
+
+//===================== APP TIMER =====================//
+
+#define APP_TIMER_ENABLED 1
+
+// RTC1 frequency (0 = 32768 Hz)
+#define APP_TIMER_CONFIG_RTC_FREQUENCY 0
+
+// Приоритет прерывания для таймера
+#define APP_TIMER_CONFIG_IRQ_PRIORITY 6
+
+// Размер очереди операций таймеров
+#define APP_TIMER_CONFIG_OP_QUEUE_SIZE 10
+
+// Не трогаем логи
+#define APP_TIMER_CONFIG_LOG_ENABLED 0
+#define APP_TIMER_CONFIG_LOG_LEVEL 3
+
+// Не использовать scheduler
+#define APP_TIMER_CONFIG_USE_SCHEDULER 0
+
+// Если 1 — RTC1 не будет отключаться (нормально)
+#define APP_TIMER_KEEPS_RTC_ACTIVE 1
+
 // <e> NRFX_PWM_ENABLED - nrfx_pwm - PWM peripheral driver
 //==========================================================
 #ifndef NRFX_PWM_ENABLED
