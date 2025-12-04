@@ -9,6 +9,15 @@
 #include <app_error.h>
 #include <math.h>
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+#include "nrf_log_backend_usb.h"
+
+#include "app_usbd.h"
+#include "app_usbd_serial_num.h"
+
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
 #define LED_1 NRF_GPIO_PIN_MAP(0, 6)
 #define LED_R NRF_GPIO_PIN_MAP(0, 8)
@@ -70,6 +79,14 @@ static inline void led_on_gpio(uint32_t pin)
 #else
     nrf_gpio_pin_set(pin);
 #endif
+}
+
+void logs_init()
+{
+    ret_code_t ret = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(ret);
+
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
 void pwm_init(void)
@@ -160,9 +177,41 @@ static void update_color_from_hsv(void)
     apply_rgb_to_pwm(r, g, b);
 }
 
+static void switch_led(void)
+{
+    if (button_stable_pressed)
+    {
+        if (nrfx_systick_test(&hold_time, HOLD_BUTTON_MS * 1000U))
+        {
+            nrfx_systick_get(&hold_time);
+
+            switch (mode)
+            {
+            case MODE_HUE:
+                hue = (hue + 1) % 360;
+                break;
+
+            case MODE_SAT:
+                if (saturation < 100)
+                    saturation++;
+                break;
+
+            case MODE_VAL:
+                if (value < 100)
+                    value++;
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+}
+
 static void debounce_timer_handler(void *p_context)
 {
     bool stable = (nrf_gpio_pin_read(BUTTON) == 0);
+    // NRF_LOG_INFO("> debounce_timer_handler");
 
     if (stable != button_stable_pressed)
     {
@@ -181,12 +230,14 @@ static void debounce_timer_handler(void *p_context)
                 {
                     mode = (input_mode_t)((mode + 1) % 4);
                     waiting_second_click = false;
+                    switch_led();
                 }
             }
             else
             {
                 waiting_second_click = true;
                 nrfx_systick_get(&last_click_time);
+                //    NRF_LOG_INFO("< debounce_timer_handler");
             }
         }
     }
@@ -259,6 +310,10 @@ static inline void sleep_cpu(void)
 int main(void)
 {
     nrfx_systick_init();
+
+    logs_init();
+    NRF_LOG_INFO("Starting up the test project");
+
     app_timer_init();
     app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
 
@@ -272,37 +327,12 @@ int main(void)
 
     while (1)
     {
-        if (button_stable_pressed)
-        {
-            if (nrfx_systick_test(&hold_time, HOLD_BUTTON_MS * 1000U))
-            {
-                nrfx_systick_get(&hold_time);
-
-                switch (mode)
-                {
-                case MODE_HUE:
-                    hue = (hue + 1) % 360;
-                    break;
-
-                case MODE_SAT:
-                    if (saturation < 100)
-                        saturation++;
-                    break;
-
-                case MODE_VAL:
-                    if (value < 100)
-                        value++;
-                    break;
-
-                default:
-                    break;
-                }
-
-                update_color_from_hsv();
-            }
-        }
-
+        switch_led();
+        update_color_from_hsv();
         indicator_update();
+
+        NRF_LOG_PROCESS();
+
         sleep_cpu();
     }
 }
