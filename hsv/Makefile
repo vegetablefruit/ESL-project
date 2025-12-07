@@ -61,6 +61,7 @@ SRC_FILES += \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
   
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -75,8 +76,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/external/nrf_oberon/include \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
   $(SDK_ROOT)/external/utf_converter \
-  $(SDK_ROOT)/modules/nrfx/drivers/include \
-  $(SDK_ROOT)/components/libraries/cli \
+  $(SDK_ROOT)
   $(SDK_ROOT)/components/libraries/queue \
   $(SDK_ROOT)/components/libraries/pwr_mgmt \
   $(SDK_ROOT)/components/libraries/mem_manager \
@@ -114,6 +114,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/stack_guard \
   $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/components/softdevice/mbr/headers \
+  $(SDK_ROOT)/components/libraries/timer \
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -130,6 +131,7 @@ CFLAGS += $(OPT)
 CFLAGS += -DUSE_APP_CONFIG
 CFLAGS += -DAPP_TIMER_V2
 CFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
+CFLAGS += -DAPP_CONFIG_H
 CFLAGS += -DBOARD_PCA10059
 # CFLAGS += -DBSP_DEFINES_ONLY
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET

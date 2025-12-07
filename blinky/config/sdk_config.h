@@ -3214,5 +3214,21 @@
 #define NRF_ATFIFO_ENABLED 1
 #endif
 
+// Enable POWER driver
+#define NRFX_POWER_ENABLED 1
+#define NRFX_POWER_CONFIG_IRQ_PRIORITY 7
+
+// Enable CLOCK driver
+#define NRFX_CLOCK_ENABLED 1
+#define NRFX_CLOCK_CONFIG_IRQ_PRIORITY 7
+
+#define NRFX_CLOCK_CONFIG_LF_SRC 1
+
+#ifndef NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE
+#define NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE 64
+#endif
+
+#define NRFX_USBD_ENABLED 1
+
 // <<< end of configuration section >>>
-#endif // SDK_CONFIG_H
+#endif // SDK_CONFIG_HS

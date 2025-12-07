@@ -26,7 +26,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE
-*/
+ */
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
 
@@ -35,35 +35,35 @@
 #ifndef NRF_LOG_BACKEND_UART_ENABLED
 #define NRF_LOG_BACKEND_UART_ENABLED 0
 #endif
-// <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
+// <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
 #define NRF_LOG_BACKEND_UART_TX_PIN 6
 #endif
 
 // <o> NRF_LOG_BACKEND_UART_BAUDRATE  - Default Baudrate
- 
-// <323584=> 1200 baud 
-// <643072=> 2400 baud 
-// <1290240=> 4800 baud 
-// <2576384=> 9600 baud 
-// <3862528=> 14400 baud 
-// <5152768=> 19200 baud 
-// <7716864=> 28800 baud 
-// <10289152=> 38400 baud 
-// <15400960=> 57600 baud 
-// <20615168=> 76800 baud 
-// <30801920=> 115200 baud 
-// <61865984=> 230400 baud 
-// <67108864=> 250000 baud 
-// <121634816=> 460800 baud 
-// <251658240=> 921600 baud 
-// <268435456=> 1000000 baud 
+
+// <323584=> 1200 baud
+// <643072=> 2400 baud
+// <1290240=> 4800 baud
+// <2576384=> 9600 baud
+// <3862528=> 14400 baud
+// <5152768=> 19200 baud
+// <7716864=> 28800 baud
+// <10289152=> 38400 baud
+// <15400960=> 57600 baud
+// <20615168=> 76800 baud
+// <30801920=> 115200 baud
+// <61865984=> 230400 baud
+// <67108864=> 250000 baud
+// <121634816=> 460800 baud
+// <251658240=> 921600 baud
+// <268435456=> 1000000 baud
 
 #ifndef NRF_LOG_BACKEND_UART_BAUDRATE
 #define NRF_LOG_BACKEND_UART_BAUDRATE 30801920
 #endif
 
-// <o> NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 
+// <o> NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings.
 // <i> Size of the buffer is a trade-off between RAM usage and processing.
 // <i> if buffer is smaller then strings will often be fragmented.
 // <i> It is recommended to use size which will fit typical log and only the
@@ -74,14 +74,13 @@
 #endif
 // </e>
 
-
 // <e> LOG_BACKEND_USB_ENABLED - log_backend_usb - Log USB backend
 //==========================================================
 #ifndef LOG_BACKEND_USB_ENABLED
 #define LOG_BACKEND_USB_ENABLED 1
 #endif
 
-// <o> LOG_BACKEND_USB_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 
+// <o> LOG_BACKEND_USB_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings.
 // <i> Size of the buffer is a trade-off between RAM usage and processing.
 // <i> if buffer is smaller then strings will often be fragmented.
 // <i> It is recommended to use size which will fit typical log and only the
@@ -126,6 +125,78 @@
 #endif
 
 // </e>
+// <e> PWM_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef PWM_CONFIG_LOG_ENABLED
+#define PWM_CONFIG_LOG_ENABLED 0
+#endif
+// <o> PWM_CONFIG_LOG_LEVEL  - Default Severity level
+
+// <0=> Off
+// <1=> Error
+// <2=> Warning
+// <3=> Info
+// <4=> Debug
+
+#ifndef PWM_CONFIG_LOG_LEVEL
+#define PWM_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> PWM_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PWM_CONFIG_INFO_COLOR
+#define PWM_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> PWM_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PWM_CONFIG_DEBUG_COLOR
+#define PWM_CONFIG_DEBUG_COLOR 0
+#endif
+
+// <e> NRFX_PWM_ENABLED - nrfx_pwm - PWM peripheral driver
+//==========================================================
+
+// <q> NRFX_PWM0_ENABLED  - Enable PWM0 instance
+
+#ifndef NRFX_PWM0_ENABLED
+#define NRFX_PWM0_ENABLED 1
+#endif
+
+// <o> NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
+
+// <0=> 0 (highest)
+// <1=> 1
+// <2=> 2
+// <3=> 3
+// <4=> 4
+// <5=> 5
+// <6=> 6
+// <7=> 7
+
+#ifndef NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY
+#define NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY 7
+#endif
 
 // Application-specific
 
@@ -152,7 +223,17 @@
 #define NRFX_GPIOTE_CONFIG_IRQ_PRIORITY 7
 
 // Systick module
+#define SYSTICK_ENABLED 0
+
 #define NRFX_SYSTICK_ENABLED 1
+
+#define GPIOTE_CONFIG_LOG_ENABLED 0
+
+#define GPIOTE_CONFIG_LOG_LEVEL 3
+
+#define GPIOTE_CONFIG_INFO_COLOR 0
+
+#define NRFX_PWM_ENABLED 1
 
 #define APP_TIMER_SAFE_WINDOW_MS 1
 

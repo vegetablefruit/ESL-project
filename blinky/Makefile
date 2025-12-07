@@ -38,8 +38,11 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/timer/app_timer2.c \
   $(SDK_ROOT)/components/libraries/sortlist/nrf_sortlist.c \
   $(SDK_ROOT)/components/libraries/atomic_fifo/nrf_atfifo.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c
-  
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
+
+
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -71,11 +74,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries \
   $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/components/libraries/sortlist \
-  $(SDK_ROOT)/components/libraries/log \
-  $(SDK_ROOT)/components/libraries/usbd \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
-  $(SDK_ROOT)/integration/nrfx/legacy \
   $(SDK_ROOT)/components/libraries/atomic_fifo \
+  
 
 # Libraries common to all targets
 LIB_FILES += \
