@@ -22,7 +22,7 @@
 
 #define DEBOUNCE_MS 50
 #define HOLD_BUTTON_MS 500
-#define SHORT_CLICK_MS 100
+#define SHORT_CLICK_MS 50
 #define DOUBLE_CLICK_MS 400
 
 typedef enum
@@ -43,6 +43,7 @@ typedef enum
 APP_TIMER_DEF(btn_debounce_timer);
 APP_TIMER_DEF(btn_short_click_timer);
 APP_TIMER_DEF(btn_double_click_timer);
+APP_TIMER_DEF(btn_long_click_timer);
 
 static button_states_t button_state = BUTTON_OFF;
 static bool debounced = false;
@@ -54,6 +55,7 @@ static void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 static void debounce_timer_handler(void *p_context);
 static void btn_short_click_timer_handler(void *p_context);
 static void btn_double_click_timer_handler(void *p_context);
+static void btn_long_click_timer_handler(void *p_context);
 
 static void switch_hsv_input_mode();
 
@@ -90,6 +92,7 @@ void timer_init()
     app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
     app_timer_create(&btn_short_click_timer, APP_TIMER_MODE_SINGLE_SHOT, btn_short_click_timer_handler);
     app_timer_create(&btn_double_click_timer, APP_TIMER_MODE_SINGLE_SHOT, btn_double_click_timer_handler);
+    app_timer_create(&btn_long_click_timer, APP_TIMER_MODE_SINGLE_SHOT, btn_long_click_timer_handler);
 }
 
 int main(void)
@@ -136,10 +139,11 @@ void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
                 NRF_LOG_INFO("to long click");
                 button_state = BUTTON_LONG_CLICK;
                 // TODO handle long click
+               app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(HOLD_BUTTON_MS), NULL);
             }
             else
             {
-                NRF_LOG_INFO("to off");
+                NRF_LOG_INFO("to off");                                                                                                 
                 button_state = BUTTON_OFF;
                 // TODO handle short click
                 app_timer_start(btn_short_click_timer, APP_TIMER_TICKS(SHORT_CLICK_MS), NULL);
@@ -183,8 +187,8 @@ static void debounce_timer_handler(void *p_context)
     {
         debounced = true;
         NRF_LOG_INFO("timer");
-        button_state = BUTTON_LONG_CLICK;
-        app_timer_start(btn_short_click_timer, APP_TIMER_TICKS(SHORT_CLICK_MS), NULL);
+        button_state = BUTTON_DEBOUNCE;
+        app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(HOLD_BUTTON_MS), NULL);
     }
     else
     {
@@ -194,6 +198,8 @@ static void debounce_timer_handler(void *p_context)
 
 static void btn_short_click_timer_handler(void *p_context)
 {
+    if (button_state == BUTTON_LONG_CLICK) return;
+
     if (nrf_gpio_pin_read(BUTTON) == 0)
     {
         button_state = BUTTON_LONG_CLICK;
@@ -215,6 +221,15 @@ static void btn_short_click_timer_handler(void *p_context)
         }
     }
 }
+
+static void btn_long_click_timer_handler(void *p_context)
+{
+    if (nrf_gpio_pin_read(BUTTON) == 0) {
+        button_state = BUTTON_LONG_CLICK;
+        NRF_LOG_INFO("long click detected");
+    }
+}
+
 
 static void btn_double_click_timer_handler(void *p_context)
 {
