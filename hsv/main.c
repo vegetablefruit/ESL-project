@@ -19,6 +19,11 @@
 #include "nrfx_clock.h"
 
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
+#define LED_1 NRF_GPIO_PIN_MAP(0, 6)
+#define LED_R NRF_GPIO_PIN_MAP(0, 8)
+#define LED_G NRF_GPIO_PIN_MAP(0, 9)
+#define LED_B NRF_GPIO_PIN_MAP(0, 12)
+#define LED_ACTIVE_LOW 1
 
 #define DEBOUNCE_MS 50
 #define HOLD_BUTTON_MS 500
@@ -49,6 +54,10 @@ static button_states_t button_state = BUTTON_OFF;
 static bool debounced = false;
 static bool wait_first_click = true;
 
+static uint32_t hue = 356; // 360 * 0.99
+static uint32_t saturation = 100;
+static uint32_t value = 100;
+
 static int input_mode = MODE_NONE;
 
 static void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
@@ -57,7 +66,37 @@ static void btn_short_click_timer_handler(void *p_context);
 static void btn_double_click_timer_handler(void *p_context);
 static void btn_long_click_timer_handler(void *p_context);
 
+static inline void sleep_cpu(void);
+static void indicator_update(void);
+static inline void led_on_gpio(uint32_t pin);
+static inline void led_off_gpio(uint32_t pin);
+
 static void switch_hsv_input_mode();
+
+static nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
+static nrf_pwm_values_individual_t pwm_vals = {0, 0, 0, 0};
+static nrf_pwm_sequence_t pwm_seq =
+    {
+        .values.p_individual = &pwm_vals,
+        .length = 1,
+        .repeats = 0,
+        .end_delay = 0};
+
+void pwm_init(void)
+{
+    nrfx_pwm_config_t config =
+        {
+            .output_pins = {LED_R, LED_G, LED_B, NRFX_PWM_PIN_NOT_USED},
+            .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
+            .base_clock = NRF_PWM_CLK_1MHz,
+            .count_mode = NRF_PWM_MODE_UP,
+            .top_value = 1000,
+            .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+            .step_mode = NRF_PWM_STEP_AUTO};
+
+    nrfx_pwm_init(&pwm0, &config, NULL);
+    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+}
 
 void clock_init()
 {
@@ -101,6 +140,7 @@ int main(void)
 
     NRF_LOG_INFO("Starting up the test project with USB logging");
 
+    pwm_init();
     gpiote_init();
     clock_init();
     timer_init();
@@ -109,6 +149,8 @@ int main(void)
     {
         LOG_BACKEND_USB_PROCESS();
         NRF_LOG_PROCESS();
+        indicator_update();
+        sleep_cpu();
     }
 }
 
@@ -240,4 +282,70 @@ static void switch_hsv_input_mode()
 {
     input_mode =  (input_mode + 1) % 4;
     NRF_LOG_INFO("HSV input mode %d", input_mode);
+}
+
+static void indicator_update(void)
+{
+    nrfx_systick_state_t now;
+    nrfx_systick_get(&now);
+
+    switch (mode)
+    {
+    case MODE_NONE:
+        led_off_gpio(LED_1);
+        break;
+
+    case MODE_HUE:
+        if (nrfx_systick_test(&indicator_last_toggle, 500000))
+        {
+            indicator_last_toggle = now;
+            indicator = !indicator;
+            if (indicator)
+                led_on_gpio(LED_1);
+            else
+                led_off_gpio(LED_1);
+        }
+        break;
+
+    case MODE_SAT:
+        if (nrfx_systick_test(&indicator_last_toggle, 120000))
+        {
+            indicator_last_toggle = now;
+            indicator = !indicator;
+            if (indicator)
+                led_on_gpio(LED_1);
+            else
+                led_off_gpio(LED_1);
+        }
+        break;
+
+    case MODE_VAL:
+        led_on_gpio(LED_1);
+        break;
+    }
+}
+
+static inline void led_off_gpio(uint32_t pin)
+{
+#if LED_ACTIVE_LOW
+    nrf_gpio_pin_set(pin);
+#else
+    nrf_gpio_pin_clear(pin);
+#endif
+}
+
+static inline void led_on_gpio(uint32_t pin)
+{
+#if LED_ACTIVE_LOW
+    nrf_gpio_pin_clear(pin);
+#else
+    nrf_gpio_pin_set(pin);
+#endif
+}
+
+static inline void sleep_cpu(void)
+{
+    __WFE();
+    __SEV();
+    __WFI();
 }
