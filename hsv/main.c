@@ -12,6 +12,7 @@
 #include "app_usbd.h"
 #include "app_usbd_serial_num.h"
 
+#include <nrfx_pwm.h>
 #include <nrfx_systick.h>
 #include <app_timer.h>
 #include <nrf_gpio.h>
@@ -54,11 +55,13 @@ static button_states_t button_state = BUTTON_OFF;
 static bool debounced = false;
 static bool wait_first_click = true;
 
-static uint32_t hue = 356; // 360 * 0.99
-static uint32_t saturation = 100;
-static uint32_t value = 100;
+// static uint32_t hue = 356; // 360 * 0.99
+// static uint32_t saturation = 100;
+// static uint32_t value = 100;
 
 static int input_mode = MODE_NONE;
+static nrfx_systick_state_t indicator_last_toggle;
+static bool indicator = false;
 
 static void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 static void debounce_timer_handler(void *p_context);
@@ -181,11 +184,11 @@ void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
                 NRF_LOG_INFO("to long click");
                 button_state = BUTTON_LONG_CLICK;
                 // TODO handle long click
-               app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(HOLD_BUTTON_MS), NULL);
+                app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(HOLD_BUTTON_MS), NULL);
             }
             else
             {
-                NRF_LOG_INFO("to off");                                                                                                 
+                NRF_LOG_INFO("to off");
                 button_state = BUTTON_OFF;
                 // TODO handle short click
                 app_timer_start(btn_short_click_timer, APP_TIMER_TICKS(SHORT_CLICK_MS), NULL);
@@ -240,7 +243,8 @@ static void debounce_timer_handler(void *p_context)
 
 static void btn_short_click_timer_handler(void *p_context)
 {
-    if (button_state == BUTTON_LONG_CLICK) return;
+    if (button_state == BUTTON_LONG_CLICK)
+        return;
 
     if (nrf_gpio_pin_read(BUTTON) == 0)
     {
@@ -252,11 +256,14 @@ static void btn_short_click_timer_handler(void *p_context)
     {
         button_state = BUTTON_OFF;
         NRF_LOG_INFO("short click detected");
-        if (wait_first_click) {
+        if (wait_first_click)
+        {
             NRF_LOG_INFO("first click");
             wait_first_click = false;
             app_timer_start(btn_double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_MS), NULL);
-        } else {
+        }
+        else
+        {
             NRF_LOG_INFO("second click");
             wait_first_click = true;
             switch_hsv_input_mode();
@@ -266,12 +273,12 @@ static void btn_short_click_timer_handler(void *p_context)
 
 static void btn_long_click_timer_handler(void *p_context)
 {
-    if (nrf_gpio_pin_read(BUTTON) == 0) {
+    if (nrf_gpio_pin_read(BUTTON) == 0)
+    {
         button_state = BUTTON_LONG_CLICK;
         NRF_LOG_INFO("long click detected");
     }
 }
-
 
 static void btn_double_click_timer_handler(void *p_context)
 {
@@ -280,7 +287,7 @@ static void btn_double_click_timer_handler(void *p_context)
 
 static void switch_hsv_input_mode()
 {
-    input_mode =  (input_mode + 1) % 4;
+    input_mode = (input_mode + 1) % 4;
     NRF_LOG_INFO("HSV input mode %d", input_mode);
 }
 
@@ -289,7 +296,7 @@ static void indicator_update(void)
     nrfx_systick_state_t now;
     nrfx_systick_get(&now);
 
-    switch (mode)
+    switch (input_mode)
     {
     case MODE_NONE:
         led_off_gpio(LED_1);
