@@ -52,14 +52,12 @@ static button_states_t button_state = BUTTON_OFF;
 static bool wait_first_click = true;
 static int input_mode = MODE_NONE;
 
-// static uint32_t hue = 356; // 360 * 0.99
+static uint32_t hue = 356; // 360 * 0.99
 // static uint32_t saturation = 100;
 // static uint32_t value = 100;
-#if 0
-static int input_mode = MODE_NONE;
-static nrfx_systick_state_t indicator_last_toggle;
-static bool indicator = false;
-#endif
+
+// static nrfx_systick_state_t indicator_last_toggle;
+// static bool indicator = false;
 
 static void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 static void debounce_timer_handler(void *p_context);
@@ -69,9 +67,9 @@ static void long_click_timer_handler(void *p_context);
 static inline void sleep_cpu(void);
 static inline void led_on_gpio(uint32_t pin);
 static inline void led_off_gpio(uint32_t pin);
+static void update_rgb_from_hue(uint16_t hue);
 
 static void switch_hsv_input_mode();
-static void switch_color_mode();
 #if 0
 static void indicator_update(void);
 #endif
@@ -85,9 +83,32 @@ static nrf_pwm_sequence_t pwm_seq =
         .repeats = 0,
         .end_delay = 0};
 
+/* PWM for Green LED */
+static nrfx_pwm_t pwm1 = NRFX_PWM_INSTANCE(1);
+static nrf_pwm_values_individual_t pwm1_vals_hue = {0, 0, 0, 0};
+static nrf_pwm_sequence_t pwm1_seq_hue =
+    {
+        .values.p_individual = &pwm_vals,
+        .length = NRF_PWM_VALUES_LENGTH(pwm1_vals_hue),
+        .repeats = 0,
+        .end_delay = 0};
+
 void pwm_init(void)
 {
-    nrfx_pwm_config_t config =
+    nrfx_pwm_config_t pwm0_config =
+        {
+            .output_pins = {LED_R, LED_G, LED_B, NRFX_PWM_PIN_NOT_USED},
+            .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
+            .base_clock = NRF_PWM_CLK_1MHz,
+            .count_mode = NRF_PWM_MODE_UP,
+            .top_value = 1000,
+            .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+            .step_mode = NRF_PWM_STEP_AUTO};
+
+    nrfx_pwm_init(&pwm0, &pwm0_config, NULL);
+    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+
+    nrfx_pwm_config_t pwm1_config =
         {
             .output_pins = {LED_R, LED_G, LED_B, NRFX_PWM_PIN_NOT_USED},
             .irq_priority = NRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY,
@@ -98,7 +119,8 @@ void pwm_init(void)
             .step_mode = NRF_PWM_STEP_AUTO};
 
     nrfx_pwm_init(&pwm0, &config, NULL);
-    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+    // To be called when state changes
+    // nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 }
 
 void clock_init()
@@ -114,6 +136,7 @@ void gpiote_init()
     nrfx_gpiote_init();
 
     nrf_gpio_cfg_output(LED_1);
+    led_off_gpio(LED_1);
 
     nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
     config.pull = NRF_GPIO_PIN_PULLUP;
@@ -135,7 +158,7 @@ void timer_init()
     app_timer_init();
     app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
     app_timer_create(&btn_double_click_timer, APP_TIMER_MODE_SINGLE_SHOT, double_click_timer_handler);
-    app_timer_create(&btn_long_click_timer, APP_TIMER_MODE_SINGLE_SHOT, long_click_timer_handler);
+    app_timer_create(&btn_long_click_timer, APP_TIMER_MODE_REPEATED, long_click_timer_handler);
 }
 
 int main(void)
@@ -175,14 +198,15 @@ static void debounce_timer_handler(void *p_context)
         button_state = BUTTON_ON;
         led_on_gpio(LED_1);
 
-        app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(LONG_CLICK_MS), NULL);
+        app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(50), NULL);
         NRF_LOG_INFO("button on");
     }
     else
     {
         app_timer_stop(btn_long_click_timer);
         button_state = BUTTON_OFF;
-        led_off_gpio(LED_1);
+        if (input_mode == MODE_NONE)
+            led_off_gpio(LED_1);
         NRF_LOG_INFO("short click");
         if (wait_first_click)
         {
@@ -203,9 +227,27 @@ static void long_click_timer_handler(void *p_context)
 {
     if (nrf_gpio_pin_read(BUTTON) == 0)
     {
-        NRF_LOG_INFO("long click");
+        switch (input_mode)
+        {
+        case MODE_HUE:
+            hue = (hue + 3) % 360;
+            update_rgb_from_hue(hue);
+            NRF_LOG_INFO("Adjusting HUE");
+            break;
+
+        case MODE_SAT:
+            NRF_LOG_INFO("Adjusting SATURATION");
+            break;
+
+        case MODE_VAL:
+            NRF_LOG_INFO("Adjusting BRIGHTNESS");
+            break;
+
+        default:
+            NRF_LOG_INFO("Long click ignored");
+            break;
+        }
         wait_first_click = true;
-        switch_color_mode();
     }
 }
 
@@ -215,19 +257,84 @@ static void double_click_timer_handler(void *p_context)
     {
         NRF_LOG_INFO("single click finished");
         wait_first_click = true;
-        }
+    }
 }
 
 static void switch_hsv_input_mode()
 {
     input_mode = (input_mode + 1) % 4;
     NRF_LOG_INFO("HSV input mode %d", input_mode);
+
+    switch (input_mode)
+    {
+    case MODE_NONE:
+        led_off_gpio(LED_1);
+        NRF_LOG_INFO("Mode NONE");
+        break;
+
+    case MODE_HUE:
+        led_on_gpio(LED_1);
+        NRF_LOG_INFO("Mode HUE");
+        break;
+
+    case MODE_SAT:
+        led_on_gpio(LED_1);
+        NRF_LOG_INFO("Mode SAT");
+        break;
+
+    case MODE_VAL:
+        led_on_gpio(LED_1);
+        NRF_LOG_INFO("Mode VAL");
+        break;
+    }
 }
 
-static void switch_color_mode()
+static void update_rgb_from_hue(uint16_t hue)
 {
-    NRF_LOG_INFO("Color changed");
+    uint16_t region = hue / 60;
+    uint16_t remainder = (hue - (region * 60)) * 255 / 60;
+
+    uint8_t r = 0, g = 0, b = 0;
+
+    switch (region)
+    {
+    case 0:
+        r = 255;
+        g = remainder;
+        b = 0;
+        break;
+    case 1:
+        r = 255 - remainder;
+        g = 255;
+        b = 0;
+        break;
+    case 2:
+        r = 0;
+        g = 255;
+        b = remainder;
+        break;
+    case 3:
+        r = 0;
+        g = 255 - remainder;
+        b = 255;
+        break;
+    case 4:
+        r = remainder;
+        g = 0;
+        b = 255;
+        break;
+    case 5:
+        r = 255;
+        g = 0;
+        b = 255 - remainder;
+        break;
+    }
+
+    pwm_vals.channel_0 = r * 4;
+    pwm_vals.channel_1 = g * 4;
+    pwm_vals.channel_2 = b * 4;
 }
+
 #if 0
 static void indicator_update(void)
 {
@@ -270,7 +377,6 @@ static void indicator_update(void)
     }
 }
 #endif
-
 static inline void led_off_gpio(uint32_t pin)
 {
 #if LED_ACTIVE_LOW
