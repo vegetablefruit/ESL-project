@@ -27,6 +27,8 @@
 #define LED_ACTIVE_LOW 1
 
 #define DEBOUNCE_MS 50
+#define DOUBLE_CLICK_MS 400
+#define LONG_CLICK_MS 500
 
 typedef enum
 {
@@ -43,8 +45,12 @@ typedef enum
 } input_mode_t;
 
 APP_TIMER_DEF(btn_debounce_timer);
+APP_TIMER_DEF(btn_double_click_timer);
+APP_TIMER_DEF(btn_long_click_timer);
 
 static button_states_t button_state = BUTTON_OFF;
+static bool wait_first_click = true;
+static int input_mode = MODE_NONE;
 
 // static uint32_t hue = 356; // 360 * 0.99
 // static uint32_t saturation = 100;
@@ -57,13 +63,16 @@ static bool indicator = false;
 
 static void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 static void debounce_timer_handler(void *p_context);
+static void double_click_timer_handler(void *p_context);
+static void long_click_timer_handler(void *p_context);
 
 static inline void sleep_cpu(void);
 static inline void led_on_gpio(uint32_t pin);
 static inline void led_off_gpio(uint32_t pin);
 
-#if 0
 static void switch_hsv_input_mode();
+static void switch_color_mode();
+#if 0
 static void indicator_update(void);
 #endif
 
@@ -125,6 +134,8 @@ void timer_init()
 {
     app_timer_init();
     app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
+    app_timer_create(&btn_double_click_timer, APP_TIMER_MODE_SINGLE_SHOT, double_click_timer_handler);
+    app_timer_create(&btn_long_click_timer, APP_TIMER_MODE_SINGLE_SHOT, long_click_timer_handler);
 }
 
 int main(void)
@@ -153,6 +164,8 @@ void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     app_timer_stop(btn_debounce_timer);
     app_timer_start(btn_debounce_timer, APP_TIMER_TICKS(DEBOUNCE_MS), NULL);
+    app_timer_start(btn_double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_MS), NULL);
+    app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(LONG_CLICK_MS), NULL);
 }
 
 static void debounce_timer_handler(void *p_context)
@@ -161,21 +174,61 @@ static void debounce_timer_handler(void *p_context)
     {
         button_state = BUTTON_ON;
         led_on_gpio(LED_1);
+
+        app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(LONG_CLICK_MS), NULL);
+        NRF_LOG_INFO("button on");
     }
     else
     {
+        app_timer_stop(btn_long_click_timer);
         button_state = BUTTON_OFF;
         led_off_gpio(LED_1);
+        NRF_LOG_INFO("short click");
+        if (wait_first_click)
+        {
+            NRF_LOG_INFO("first click");
+            wait_first_click = false;
+            app_timer_start(btn_double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_MS), NULL);
+        }
+        else
+        {
+            wait_first_click = true;
+            NRF_LOG_INFO("second click");
+            switch_hsv_input_mode();
+        }
     }
 }
 
-#if 0
+static void long_click_timer_handler(void *p_context)
+{
+    if (nrf_gpio_pin_read(BUTTON) == 0)
+    {
+        NRF_LOG_INFO("long click");
+        wait_first_click = true;
+        switch_color_mode();
+    }
+}
+
+static void double_click_timer_handler(void *p_context)
+{
+    if (!wait_first_click)
+    {
+        NRF_LOG_INFO("single click finished");
+        wait_first_click = true;
+        }
+}
+
 static void switch_hsv_input_mode()
 {
     input_mode = (input_mode + 1) % 4;
     NRF_LOG_INFO("HSV input mode %d", input_mode);
 }
 
+static void switch_color_mode()
+{
+    NRF_LOG_INFO("Color changed");
+}
+#if 0
 static void indicator_update(void)
 {
     nrfx_systick_state_t now;
