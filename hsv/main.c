@@ -57,8 +57,12 @@ static bool led1_state = false;
 static int input_mode = MODE_NONE;
 
 static uint32_t hue = 356; // 360 * 0.99
-// static uint32_t saturation = 100;
-// static uint32_t value = 100;
+static uint32_t sat = 255;
+static uint32_t val = 255;
+
+static uint16_t rgb_r = 0;
+static uint16_t rgb_g = 0;
+static uint16_t rgb_b = 0;
 
 // static nrfx_systick_state_t indicator_last_toggle;
 // static bool indicator = false;
@@ -69,11 +73,12 @@ static void double_click_timer_handler(void *p_context);
 static void long_click_timer_handler(void *p_context);
 static void main_timer_handler(void *p_context);
 static void mode_button_handler(void *p_context);
+static void hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v);
+static void pwm_update_from_rgb(void);
 
 static inline void sleep_cpu(void);
 static inline void led_on_gpio(uint32_t pin);
 static inline void led_off_gpio(uint32_t pin);
-static void update_rgb_from_hue(uint16_t hue);
 
 static void switch_hsv_input_mode();
 #if 0
@@ -102,7 +107,7 @@ void pwm_init(void)
             .step_mode = NRF_PWM_STEP_AUTO};
 
     nrfx_pwm_init(&pwm0, &pwm0_config, NULL);
-    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, 0);
 }
 
 void clock_init()
@@ -173,9 +178,6 @@ void button_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     app_timer_stop(btn_debounce_timer);
     app_timer_start(btn_debounce_timer, APP_TIMER_TICKS(DEBOUNCE_MS), NULL);
-    // app_timer_start(btn_double_click_timer, APP_TIMER_TICKS(DOUBLE_CLICK_MS), NULL);
-    // app_timer_start(main_timer, APP_TIMER_TICKS(100), NULL);
-    //  app_timer_start(btn_long_click_timer, APP_TIMER_TICKS(LONG_CLICK_MS), NULL);
 }
 
 static void debounce_timer_handler(void *p_context)
@@ -206,7 +208,6 @@ static void debounce_timer_handler(void *p_context)
                 switch_hsv_input_mode();
             }
         }
-
         button_state = BUTTON_OFF;
     }
 }
@@ -241,28 +242,35 @@ static void mode_button_handler(void *p_context)
 
 static void main_timer_handler(void *p_context)
 {
-    if (button_state == BUTTON_LONG)
+    if (button_state != BUTTON_LONG)
+        return;
+
+    switch (input_mode)
     {
-        switch (input_mode)
-        {
-        case MODE_HUE:
-            hue = (hue + 3) % 360;
-            update_rgb_from_hue(hue);
+    case MODE_HUE:
+        hue = (hue + 3) % 360;
+        break;
 
-            nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1,
-                                     NRFX_PWM_FLAG_LOOP);
-            break;
+    case MODE_SAT:
+        if (sat < 250)
+            sat += 5;
+        else
+            sat = 0;
+        break;
 
-        case MODE_SAT:
-            break;
+    case MODE_VAL:
+        if (val < 250)
+            val += 5;
+        else
+            val = 0;
+        break;
 
-        case MODE_VAL:
-            break;
-
-        default:
-            break;
-        }
+    default:
+        return;
     }
+
+    hsv_to_rgb(hue, sat, val);
+    pwm_update_from_rgb();
 }
 
 static void switch_hsv_input_mode()
@@ -281,6 +289,7 @@ static void switch_hsv_input_mode()
 
     case MODE_HUE:
         led_on_gpio(LED_1);
+        app_timer_start(mode_blink_timer, APP_TIMER_TICKS(1000), NULL);
         NRF_LOG_INFO("mode HUE");
         break;
 
@@ -292,57 +301,64 @@ static void switch_hsv_input_mode()
 
     case MODE_VAL:
         led_on_gpio(LED_1);
-        app_timer_start(mode_blink_timer, APP_TIMER_TICKS(1000), NULL);
         NRF_LOG_INFO("mode VAL");
         break;
     }
 }
 
-static void update_rgb_from_hue(uint16_t hue)
+static void hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v)
 {
-    uint16_t region = hue / 60;
-    uint16_t remainder = (hue - (region * 60)) * 255 / 60;
+    uint8_t region = h / 60;
+    uint16_t remainder = (h % 60) * 255 / 60;
 
-    uint8_t r = 0, g = 0, b = 0;
+    uint16_t p = (v * (255 - s)) / 255;
+    uint16_t q = (v * (255 - (s * remainder) / 255)) / 255;
+    uint16_t t = (v * (255 - (s * (255 - remainder)) / 255)) / 255;
 
     switch (region)
     {
     case 0:
-        r = 255;
-        g = remainder;
-        b = 0;
+        rgb_r = v;
+        rgb_g = t;
+        rgb_b = p;
         break;
     case 1:
-        r = 255 - remainder;
-        g = 255;
-        b = 0;
+        rgb_r = q;
+        rgb_g = v;
+        rgb_b = p;
         break;
     case 2:
-        r = 0;
-        g = 255;
-        b = remainder;
+        rgb_r = p;
+        rgb_g = v;
+        rgb_b = t;
         break;
     case 3:
-        r = 0;
-        g = 255 - remainder;
-        b = 255;
+        rgb_r = p;
+        rgb_g = q;
+        rgb_b = v;
         break;
     case 4:
-        r = remainder;
-        g = 0;
-        b = 255;
+        rgb_r = t;
+        rgb_g = p;
+        rgb_b = v;
         break;
-    case 5:
-        r = 255;
-        g = 0;
-        b = 255 - remainder;
+    default:
+        rgb_r = v;
+        rgb_g = p;
+        rgb_b = q;
         break;
     }
+}
 
+static void pwm_update_from_rgb(void)
+{
     const uint16_t top = 1000;
-    pwm_vals.channel_0 = (uint16_t)((uint32_t)r * top / 255);
-    pwm_vals.channel_1 = (uint16_t)((uint32_t)g * top / 255);
-    pwm_vals.channel_2 = (uint16_t)((uint32_t)b * top / 255);
+
+    pwm_vals.channel_0 = (rgb_r * top) / 255;
+    pwm_vals.channel_1 = (rgb_g * top) / 255;
+    pwm_vals.channel_2 = (rgb_b * top) / 255;
+
+    nrfx_pwm_sequence_update(&pwm0, 0, &pwm_seq);
 }
 
 #if 0
