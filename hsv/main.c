@@ -86,11 +86,11 @@ static void indicator_update(void);
 #endif
 
 static nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
-static nrf_pwm_values_individual_t pwm_vals = {0, 0, 0, 0};
+static nrf_pwm_values_individual_t pwm_vals = {0, 0, 1000, 0};
 static nrf_pwm_sequence_t pwm_seq =
     {
         .values.p_individual = &pwm_vals,
-        .length = 1,
+        .length = 4,
         .repeats = 0,
         .end_delay = 0};
 
@@ -107,7 +107,10 @@ void pwm_init(void)
             .step_mode = NRF_PWM_STEP_AUTO};
 
     nrfx_pwm_init(&pwm0, &pwm0_config, NULL);
-    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, 0);
+    nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+
+    hsv_to_rgb(hue, sat, val);
+    pwm_update_from_rgb();
 }
 
 void clock_init()
@@ -290,6 +293,7 @@ static void switch_hsv_input_mode()
     case MODE_HUE:
         led_on_gpio(LED_1);
         app_timer_start(mode_blink_timer, APP_TIMER_TICKS(1000), NULL);
+        // nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, 0);
         NRF_LOG_INFO("mode HUE");
         break;
 
@@ -311,9 +315,9 @@ static void hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v)
     uint8_t region = h / 60;
     uint16_t remainder = (h % 60) * 255 / 60;
 
-    uint16_t p = (v * (255 - s)) / 255;
-    uint16_t q = (v * (255 - (s * remainder) / 255)) / 255;
-    uint16_t t = (v * (255 - (s * (255 - remainder)) / 255)) / 255;
+    uint16_t p = (uint16_t)v * (255 - s) / 255;
+    uint16_t q = (uint16_t)v * (255 - ((uint16_t)s * remainder) / 255) / 255;
+    uint16_t t = (uint16_t)v * (255 - ((uint16_t)s * (255 - remainder)) / 255) / 255;
 
     switch (region)
     {
@@ -322,26 +326,31 @@ static void hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v)
         rgb_g = t;
         rgb_b = p;
         break;
+
     case 1:
         rgb_r = q;
         rgb_g = v;
         rgb_b = p;
         break;
+
     case 2:
         rgb_r = p;
         rgb_g = v;
         rgb_b = t;
         break;
+
     case 3:
         rgb_r = p;
         rgb_g = q;
         rgb_b = v;
         break;
+
     case 4:
         rgb_r = t;
         rgb_g = p;
         rgb_b = v;
         break;
+
     default:
         rgb_r = v;
         rgb_g = p;
@@ -358,51 +367,11 @@ static void pwm_update_from_rgb(void)
     pwm_vals.channel_1 = (rgb_g * top) / 255;
     pwm_vals.channel_2 = (rgb_b * top) / 255;
 
+    NRF_LOG_INFO("new pwm values %d %d %d", pwm_vals.channel_0, pwm_vals.channel_1, pwm_vals.channel_2);
+
     nrfx_pwm_sequence_update(&pwm0, 0, &pwm_seq);
 }
 
-#if 0
-static void indicator_update(void)
-{
-    nrfx_systick_state_t now;
-    nrfx_systick_get(&now);
-
-    switch (input_mode)
-    {
-    case MODE_NONE:
-        led_off_gpio(LED_1);
-        break;
-
-    case MODE_HUE:
-        if (nrfx_systick_test(&indicator_last_toggle, 500000))
-        {
-            indicator_last_toggle = now;
-            indicator = !indicator;
-            if (indicator)
-                led_on_gpio(LED_1);
-            else
-                led_off_gpio(LED_1);
-        }
-        break;
-
-    case MODE_SAT:
-        if (nrfx_systick_test(&indicator_last_toggle, 120000))
-        {
-            indicator_last_toggle = now;
-            indicator = !indicator;
-            if (indicator)
-                led_on_gpio(LED_1);
-            else
-                led_off_gpio(LED_1);
-        }
-        break;
-
-    case MODE_VAL:
-        led_on_gpio(LED_1);
-        break;
-    }
-}
-#endif
 static inline void led_off_gpio(uint32_t pin)
 {
 #if LED_ACTIVE_LOW
