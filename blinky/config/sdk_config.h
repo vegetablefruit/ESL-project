@@ -118,6 +118,17 @@
 #define NRF_FPRINTF_ENABLED 1
 #endif
 
+#ifndef APP_USBD_ENABLED
+#define APP_USBD_ENABLED 1
+#endif
+
+#ifndef APP_USBD_CDC_ACM_ENABLED
+#define APP_USBD_CDC_ACM_ENABLED 1
+#endif
+
+#ifndef APP_USBD_CONFIG_EVENT_QUEUE_SIZE
+#define APP_USBD_CONFIG_EVENT_QUEUE_SIZE 8
+#endif
 // <q> NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED  - For each printed LF, function will add CR.
 
 #ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
@@ -142,7 +153,23 @@
 // <e> NRF_LOG_ENABLED - nrf_log - Logger
 //==========================================================
 #ifndef NRF_LOG_ENABLED
-#define NRF_LOG_ENABLED 0
+#define NRF_LOG_ENABLED 1
+#endif
+
+#ifndef NRF_LOG_BACKEND_UART_ENABLED
+#define NRF_LOG_BACKEND_UART_ENABLED 1
+#endif
+
+#ifndef NRF_LOG_DEFAULT_BACKENDS_ENABLED
+#define NRF_LOG_DEFAULT_BACKENDS_ENABLED 1
+#endif
+
+#ifndef NRF_LOG_BACKEND_USB_ENABLED
+#define NRF_LOG_BACKEND_USB_ENABLED 1
+#endif
+
+#ifndef NRFX_USBD_CONFIG_IRQ_PRIORITY
+#define NRFX_USBD_CONFIG_IRQ_PRIORITY 6
 #endif
 // <h> Log message pool - Configuration of log message pool
 
@@ -225,7 +252,7 @@
 // <q> NRF_LOG_FILTERS_ENABLED  - Enable dynamic filtering of logs.
 
 #ifndef NRF_LOG_FILTERS_ENABLED
-#define NRF_LOG_FILTERS_ENABLED 0
+#define NRF_LOG_FILTERS_ENABLED 1
 #endif
 
 // <q> NRF_LOG_NON_DEFFERED_CRITICAL_REGION_ENABLED  - Enable use of critical region for non deffered mode when flushing logs.
@@ -2864,7 +2891,7 @@
 // <e> NRF_SORTLIST_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRF_SORTLIST_CONFIG_LOG_ENABLED
-#define NRF_SORTLIST_CONFIG_LOG_ENABLED 0
+#define NRF_SORTLIST_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRF_SORTLIST_CONFIG_LOG_LEVEL  - Default Severity level
 
@@ -3088,6 +3115,35 @@
 // </h>
 //==========================================================
 
+#ifndef APP_TIMER_CONFIG_USE_SCHEDULER
+#define APP_TIMER_CONFIG_USE_SCHEDULER 0
+#endif
+
+#ifndef APP_TIMER_KEEPS_RTC_ACTIVE
+#define APP_TIMER_KEEPS_RTC_ACTIVE 1
+#endif
+
+#ifndef APP_TIMER_CONFIG_SWI_NUMBER
+#define APP_TIMER_CONFIG_SWI_NUMBER 0
+#endif
+
+//===================== APP TIMER =====================//
+#ifndef APP_TIMER_ENABLED
+#define APP_TIMER_ENABLED 1
+#endif
+
+#ifndef APP_TIMER_CONFIG_RTC_FREQUENCY
+#define APP_TIMER_CONFIG_RTC_FREQUENCY 0
+#endif
+
+#ifndef APP_TIMER_CONFIG_IRQ_PRIORITY
+#define APP_TIMER_CONFIG_IRQ_PRIORITY 6
+#endif
+
+#ifndef APP_TIMER_CONFIG_OP_QUEUE_SIZE
+#define APP_TIMER_CONFIG_OP_QUEUE_SIZE 10
+#endif
+
 // <e> NRFX_PWM_ENABLED - nrfx_pwm - PWM peripheral driver
 //==========================================================
 #ifndef NRFX_PWM_ENABLED
@@ -3146,5 +3202,33 @@
 #define NRFX_SYSTICK_ENABLED 1
 #endif
 
+#ifndef APP_TIMER_SAFE_WINDOW_MS
+#define APP_TIMER_SAFE_WINDOW_MS 1
+#endif
+
+#ifndef NRF_SORTLIST_ENABLED
+#define NRF_SORTLIST_ENABLED 1
+#endif
+
+#ifndef NRF_ATFIFO_ENABLED
+#define NRF_ATFIFO_ENABLED 1
+#endif
+
+// Enable POWER driver
+#define NRFX_POWER_ENABLED 1
+#define NRFX_POWER_CONFIG_IRQ_PRIORITY 7
+
+// Enable CLOCK driver
+#define NRFX_CLOCK_ENABLED 1
+#define NRFX_CLOCK_CONFIG_IRQ_PRIORITY 7
+
+#define NRFX_CLOCK_CONFIG_LF_SRC 1
+
+#ifndef NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE
+#define NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE 64
+#endif
+
+#define NRFX_USBD_ENABLED 1
+
 // <<< end of configuration section >>>
-#endif // SDK_CONFIG_H
+#endif // SDK_CONFIG_HS
