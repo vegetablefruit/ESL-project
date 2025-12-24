@@ -58,13 +58,14 @@ SRC_FILES += \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
   $(SDK_ROOT)/external/utf_converter/utf.c \
-  $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
-  /home/user/ESL-project/nvmc/nrf_pwm.c \
-  /home/user/ESL-project/nvmc/nrf_button.c \
-  /home/user/ESL-project/nvmc/nrf_hsv.c \
+  \
+  $(PROJ_DIR)/main.c \
+  $(PROJ_DIR)nrf_pwm.c \
+  $(PROJ_DIR)nrf_button.c \
+  $(PROJ_DIR)nrf_hsv.c \
   
   
 # Include folders common to all targets

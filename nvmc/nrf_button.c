@@ -1,4 +1,4 @@
-#include "button.h"
+#include "nrf_button.h"
 
 #include <stdbool.h>
 #include <app_timer.h>
@@ -9,22 +9,19 @@
 
 #include "board.h"
 
-extern app_timer_id_t btn_debounce_timer;
-extern app_timer_id_t btn_double_click_timer;
-extern app_timer_id_t btn_long_click_timer;
-extern app_timer_id_t main_timer;
-extern app_timer_id_t mode_blink_timer;
+APP_TIMER_DEF(btn_debounce_timer);
+APP_TIMER_DEF(btn_double_click_timer);
+APP_TIMER_DEF(btn_long_click_timer);
+APP_TIMER_DEF(mode_blink_timer);
 
 uint32_t hue = 356;
 uint32_t sat = 255;
 uint32_t val = 255;
 
-
 static int input_mode = MODE_NONE;
 
 extern void hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v);
 extern void pwm_update_from_rgb(void);
-
 
 static button_states_t button_state = BUTTON_OFF;
 static bool wait_first_click = true;
@@ -79,6 +76,13 @@ static void switch_hsv_input_mode(void)
     }
 }
 
+void button_timers_init()
+{
+    app_timer_create(&btn_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT, debounce_timer_handler);
+    app_timer_create(&btn_double_click_timer, APP_TIMER_MODE_SINGLE_SHOT, double_click_timer_handler);
+    app_timer_create(&btn_long_click_timer, APP_TIMER_MODE_SINGLE_SHOT, long_click_timer_handler);
+    app_timer_create(&mode_blink_timer, APP_TIMER_MODE_REPEATED, mode_button_handler);
+}
 
 void button_init(void)
 {
@@ -93,6 +97,8 @@ void button_init(void)
 
     nrfx_gpiote_in_init(BUTTON, &cfg, button_handler);
     nrfx_gpiote_in_event_enable(BUTTON, true);
+
+    button_timers_init();
 }
 
 void button_handler(nrfx_gpiote_pin_t pin,

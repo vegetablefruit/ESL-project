@@ -1,13 +1,9 @@
 #include "nrf_pwm.h"
 #include "nrf_hsv.h"
+#include "nrf_button.h"
 #include <nrfx_pwm.h>
 #include <nrf_log.h>
-
-
-static uint16_t rgb_r = 0;
-static uint16_t rgb_g = 0;
-static uint16_t rgb_b = 0;
-
+#include "board.h"
 
 static nrfx_pwm_t pwm0 = NRFX_PWM_INSTANCE(0);
 
@@ -36,7 +32,7 @@ void pwm_init(void)
     nrfx_pwm_simple_playback(&pwm0, &pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
 
     hsv_to_rgb(hue, sat, val);
-    pwm_update_from_rgb();                                                                                                          
+    pwm_update_from_rgb();
 }
 
 void pwm_update_from_rgb(void)
